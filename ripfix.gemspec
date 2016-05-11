@@ -1,5 +1,5 @@
 # -*- encoding: utf-8 -*-
-PKG_VER = '0.1.2'
+PKG_VER = '0.1.2.p1'
 
 # Base GEM Specification
 Gem::Specification.new do |spec|
