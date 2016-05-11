@@ -23,14 +23,14 @@ module IPFIX
         @fixfile = "-"
         @host = nil
         @port = nil
-        
+
         @cs = nil
         @c = nil
     end
 
     def parse_args(args)
       postargs = Array.new
-      
+
       while arg = args.shift
         if (/^-m/.match(arg))
           parse_model = true
@@ -59,7 +59,7 @@ module IPFIX
           @v9mode = true
           parse_model = false
           parse_file = false
-          parse_spec = false          
+          parse_spec = false
         elsif parse_spec && (argm = /([^:]*)\:(\d+)/.match(arg))
           @host = argm[1].length > 0 ? argm[1] : nil
           @port = argm[2].to_i
@@ -73,33 +73,33 @@ module IPFIX
           postargs << arg
         end
       end
-      
+
       postargs
     end
-    
+
     def start_collector
       # load information model
       model = InfoModel.new.load_default.load_reverse
-      @modelfiles.each do |modelfile| 
+      @modelfiles.each do |modelfile|
         STDERR.puts("loading information model file #{modelfile}")
         model.load(modelfile)
       end
-      
+
       # create collector or collector server
       if @tcpmode
-        @c = TCPSingleCollector.new(host, port, model)
+        @c = TCPSingleCollector.new(@host, @port, model)
       elsif @udpmode
-        @c = UDPCollector.new(host, port, model)
+        @c = UDPCollector.new(@host, @port, model)
       elsif @sctpmode
         require 'ipfix/sctp'
-        @c = SCTPCollector.new(host, port, model)
+        @c = SCTPCollector.new(@host, @port, model)
       elsif @v9mode
         require 'ipfix/v9pdu'
         @c = V9FileReader.new(@fixfile, model)
-      else 
+      else
         @c = FileReader.new(@fixfile, model)
       end
-      
+
       # handle signals for shutdown
       cleanup = Proc.new do
         STDERR.puts("Terminating")
@@ -110,7 +110,7 @@ module IPFIX
       Signal.trap("TERM", cleanup)
       Signal.trap("INT", cleanup)
     end
-    
+
     def on_template_add(&handler)
       if @c.respond_to?(:session)
         @c.session.set_template_add_proc(handler)
@@ -120,7 +120,7 @@ module IPFIX
         end
       end
     end
-    
+
     def on_missing_template(&handler)
       if @c.respond_to?(:session)
         @c.session.set_missing_template_proc(handler)
@@ -130,7 +130,7 @@ module IPFIX
         end
       end
     end
-    
+
     def on_bad_sequence(&handler)
       if @c.respond_to?(:session)
         @c.session.set_bad_sequence_proc(handler)
@@ -140,7 +140,7 @@ module IPFIX
         end
       end
     end
-    
+
     def on_new_message(&handler)
       @c.set_new_message_proc(handler)
     end
